@@ -1,0 +1,42 @@
+post_install() {
+    echo ">> Applying SDDM Login Screen overwrites..."
+    
+    # Check for SDDM theme directories and overwrite them if they exist
+    for theme in breeze breath2 kubuntu; do
+        if [ -d "/usr/share/sddm/themes/$theme" ]; then
+            cp -rf /usr/share/windows-7-transformation/sddmsettings/* "/usr/share/sddm/themes/$theme/"
+            echo "   -> Overwrote SDDM theme: $theme"
+        fi
+    done
+
+    echo ">> Applying Plasma presets to all user homes..."
+    
+    # Loop through all actual user directories in /home/
+    for user_home in /home/*; do
+        if[ -d "$user_home" ]; then
+            user_name=$(basename "$user_home")
+            echo "   -> Applying configuration for user: $user_name"
+            
+            # Copy presets
+            cp -rf /usr/share/windows-7-transformation/presets/.kde "$user_home/"
+            cp -rf /usr/share/windows-7-transformation/presets/.config "$user_home/"
+            
+            # Remove specific config file
+            rm -f "$user_home/.config/plasma-org.kde.plasma.desktop-appletsrc"
+            
+            # Fix ownership so the user can actually use their desktop
+            chown -R "$user_name":"$user_name" "$user_home/.kde"
+            chown -R "$user_name":"$user_name" "$user_home/.config"
+        fi
+    done
+    
+    echo "========================================================"
+    echo " Setup complete!"
+    echo " All settings, themes, and layouts have been applied."
+    echo " Please log out of your current session or reboot."
+    echo "========================================================"
+}
+
+post_upgrade() {
+    post_install
+}
